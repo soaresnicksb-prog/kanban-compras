@@ -6,6 +6,7 @@
     <title>Kanban de Compras</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .kanban-column {
             min-height: 500px;
@@ -26,21 +27,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .filter-badge {
-            display: inline-block;
-            background: #3498db;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-right: 8px;
-            margin-bottom: 8px;
-        }
-        .filter-badge .close {
-            cursor: pointer;
-            margin-left: 6px;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -55,8 +41,8 @@
                 <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                     <i class="fas fa-sync-alt"></i> Atualizar
                 </button>
-                <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fas fa-download"></i> Exportar
+                <button onclick="exportToXLSX()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fas fa-download"></i> Exportar Excel
                 </button>
             </div>
         </header>
@@ -217,12 +203,14 @@
         </div>
     </div>
 
+    <!-- Tabela oculta para exportação -->
+    <table id="exportTable" style="display: none;"></table>
+
     <script>
         // ===== VARIÁVEIS GLOBAIS =====
-        let allRecords = []; // Armazena todos os registros
-        let filteredRecords = []; // Armazena registros filtrados
+        let allRecords = [];
+        let filteredRecords = [];
 
-        // Mapeamento dos Status
         const statusMap = {
             'Cotação': 'col-cotacao',
             'Ordem de Compra Emitida': 'col-oc',
@@ -277,10 +265,7 @@
                 const data = await response.json();
                 allRecords = data.records || [];
                 
-                // Populate dropdown de fornecedores
                 populateFornecedorDropdown();
-                
-                // Aplicar filtros (que vai renderizar com filtros vazios = tudo)
                 applyFilters();
 
             } catch (error) {
@@ -302,12 +287,10 @@
             });
 
             const select = document.getElementById('fornecedorFilter');
-            // Limpar opções antigas (mantém a primeira)
             while (select.options.length > 1) {
                 select.remove(1);
             }
 
-            // Adicionar fornecedores
             Array.from(fornecedores).sort().forEach(fornecedor => {
                 const option = document.createElement('option');
                 option.value = fornecedor;
@@ -323,11 +306,9 @@
             const statusValue = document.getElementById('statusFilter').value;
             const dataValue = document.getElementById('dataFilter').value;
 
-            // Filtrar registros
             filteredRecords = allRecords.filter(record => {
                 const f = record.fields;
                 
-                // BUSCA
                 if (searchValue) {
                     const oc = String(f['Número OC'] || '').toLowerCase();
                     const item = String(f['Item'] || '').toLowerCase();
@@ -336,17 +317,14 @@
                     }
                 }
 
-                // FORNECEDOR
                 if (fornecedorValue && f['Fornecedor'] !== fornecedorValue) {
                     return false;
                 }
 
-                // STATUS
                 if (statusValue && f['Select'] !== statusValue) {
                     return false;
                 }
 
-                // DATA
                 if (dataValue) {
                     const daysOld = getDaysOld(f['Data de Criação']);
                     if (daysOld > parseInt(dataValue)) {
@@ -357,30 +335,23 @@
                 return true;
             });
 
-            // Renderizar kanban com registros filtrados
             renderKanban(filteredRecords);
-
-            // Mostrar filtros ativos
             updateActiveFilters();
 
-            // Atualizar contadores
             document.getElementById('filteredCount').textContent = filteredRecords.length;
             document.getElementById('totalCount').textContent = allRecords.length;
         }
 
         // ===== RENDERIZAR KANBAN =====
         function renderKanban(records) {
-            // Limpar colunas
             Object.values(statusMap).forEach(colId => {
                 document.getElementById(colId).innerHTML = '';
             });
 
-            // Resetar contadores
             Object.values(countMap).forEach(countId => {
                 document.getElementById(countId).textContent = '0';
             });
 
-            // Contadores temporários
             const counts = {
                 'Cotação': 0,
                 'Ordem de Compra Emitida': 0,
@@ -389,7 +360,6 @@
                 'Cancelado': 0
             };
 
-            // Renderizar cards
             records.forEach(record => {
                 const f = record.fields;
                 const status = f['Select'] || 'Cotação';
@@ -402,7 +372,6 @@
                 }
             });
 
-            // Atualizar contadores
             Object.keys(counts).forEach(key => {
                 if (countMap[key]) {
                     document.getElementById(countMap[key]).textContent = counts[key];
@@ -467,58 +436,82 @@
             applyFilters();
         }
 
-        // ===== EXPORT CSV (CORRIGIDO) =====
-        function exportToCSV() {
+        // ===== EXPORT EXCEL PROFISSIONAL =====
+        function exportToXLSX() {
             if (filteredRecords.length === 0) {
                 alert('Nenhum registro para exportar');
                 return;
             }
 
-            // Preparar dados
-            const data = filteredRecords.map(record => {
-                const f = record.fields;
-                return {
-                    'Número OC': f['Número OC'] || '',
-                    'Item': f['Item'] || '',
-                    'Fornecedor': f['Fornecedor'] || '',
-                    'Status': f['Select'] || '',
-                    'Quantidade': f['Quantidade'] || 0,
-                    'Valor Total': formatCurrency(f['Valor Total'] || 0),
-                    'Data de Criação': formatDate(f['Data de Criação'] || ''),
-                    'Data de Entrega': formatDate(f['Data de Entrega Esperada'] || '')
-                };
+            // Criar tabela HTML
+            const table = document.getElementById('exportTable');
+            table.innerHTML = '';
+
+            // Cabeçalho
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            headerRow.style.backgroundColor = '#2563eb';
+            headerRow.style.color = 'white';
+            headerRow.style.fontWeight = 'bold';
+
+            const headers = ['Nº OC', 'Item', 'Fornecedor', 'Status', 'Quantidade', 'Valor Total', 'Data Criação', 'Data Entrega'];
+            headers.forEach(header => {
+                const cell = headerRow.insertCell();
+                cell.textContent = header;
+                cell.style.padding = '10px';
+                cell.style.border = '1px solid #000';
             });
 
-            // Gerar CSV
-            const headers = Object.keys(data[0]);
-            const csvContent = [
-                headers.join(','),
-                ...data.map(row => 
-                    headers.map(header => {
-                        const value = row[header];
-                        // Escapar aspas e valores com vírgula
-                        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                            return `"${value.replace(/"/g, '""')}"`;
-                        }
-                        return value;
-                    }).join(',')
-                )
-            ].join('\n');
+            // Dados
+            const tbody = table.createTBody();
+            filteredRecords.forEach((record, index) => {
+                const f = record.fields;
+                const row = tbody.insertRow();
+                row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f3f4f6';
 
-            // Criar blob e download
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `kanban-compras-${new Date().toISOString().slice(0, 10)}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+                const cells = [
+                    f['Número OC'] || '',
+                    f['Item'] || '',
+                    f['Fornecedor'] || '',
+                    f['Select'] || '',
+                    f['Quantidade'] || 0,
+                    `R$ ${(f['Valor Total'] || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    formatDate(f['Data de Criação'] || ''),
+                    formatDate(f['Data de Entrega Esperada'] || '')
+                ];
+
+                cells.forEach((cellText, idx) => {
+                    const cell = row.insertCell();
+                    cell.textContent = cellText;
+                    cell.style.padding = '8px';
+                    cell.style.border = '1px solid #ddd';
+                    if (idx >= 4) cell.style.textAlign = 'right';
+                });
+            });
+
+            // Exportar com SheetJS
+            const ws = XLSX.utils.table_to_sheet(table);
+            
+            // Ajustar largura das colunas
+            ws['!cols'] = [
+                { wch: 10 },  // Nº OC
+                { wch: 35 },  // Item
+                { wch: 20 },  // Fornecedor
+                { wch: 18 },  // Status
+                { wch: 12 },  // Quantidade
+                { wch: 15 },  // Valor Total
+                { wch: 15 },  // Data Criação
+                { wch: 15 }   // Data Entrega
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Compras');
+            
+            const fileName = `kanban-compras-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
-        // ===== CARREGAR DADOS AO INICIAR =====
+        // ===== INICIAR =====
         document.addEventListener('DOMContentLoaded', fetchData);
     </script>
 </body>
