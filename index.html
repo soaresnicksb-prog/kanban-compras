@@ -6,7 +6,6 @@
     <title>Kanban de Compras</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
     <style>
         .kanban-column {
             min-height: 500px;
@@ -56,7 +55,7 @@
                 <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                     <i class="fas fa-sync-alt"></i> Atualizar
                 </button>
-                <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                     <i class="fas fa-download"></i> Exportar
                 </button>
             </div>
@@ -468,8 +467,8 @@
             applyFilters();
         }
 
-        // ===== EXPORT EXCEL =====
-        function exportToExcel() {
+        // ===== EXPORT CSV (CORRIGIDO) =====
+        function exportToCSV() {
             if (filteredRecords.length === 0) {
                 alert('Nenhum registro para exportar');
                 return;
@@ -484,32 +483,39 @@
                     'Fornecedor': f['Fornecedor'] || '',
                     'Status': f['Select'] || '',
                     'Quantidade': f['Quantidade'] || 0,
-                    'Valor Total': f['Valor Total'] || 0,
+                    'Valor Total': formatCurrency(f['Valor Total'] || 0),
                     'Data de Criação': formatDate(f['Data de Criação'] || ''),
-                    'Data de Entrega Esperada': formatDate(f['Data de Entrega Esperada'] || '')
+                    'Data de Entrega': formatDate(f['Data de Entrega Esperada'] || '')
                 };
             });
 
-            // Criar workbook
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Compras');
+            // Gerar CSV
+            const headers = Object.keys(data[0]);
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => 
+                    headers.map(header => {
+                        const value = row[header];
+                        // Escapar aspas e valores com vírgula
+                        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                            return `"${value.replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    }).join(',')
+                )
+            ].join('\n');
 
-            // Formatação de largura das colunas
-            ws['!cols'] = [
-                { wch: 12 },
-                { wch: 30 },
-                { wch: 20 },
-                { wch: 20 },
-                { wch: 10 },
-                { wch: 15 },
-                { wch: 15 },
-                { wch: 15 }
-            ];
-
-            // Download
-            const fileName = `kanban-compras-${new Date().toISOString().slice(0, 10)}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            // Criar blob e download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `kanban-compras-${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         // ===== CARREGAR DADOS AO INICIAR =====
