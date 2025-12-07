@@ -202,8 +202,8 @@
         </div>
 
         <!-- Kanban Board Wrapper -->
-        <div class="w-full overflow-x-auto">
-            <div id="board" class="flex gap-3" style="width: 100%; min-width: fit-content; display: flex;">
+        <div class="w-full overflow-x-auto pb-6">
+            <div id="board" class="flex gap-4" style="width: 100%; min-width: fit-content; display: flex;">
                 
                 <!-- Coluna: Cotação -->
                 <div class="bg-gray-200 p-3 rounded-lg" style="width: 260px; min-width: 260px; flex-shrink: 0;">
@@ -283,6 +283,112 @@
 
     <!-- Tabela oculta para exportação -->
     <table id="exportTable" style="display: none;"></table>
+
+    <!-- MODAL DE DETALHES DO CARD -->
+    <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-90vh overflow-y-auto">
+            <!-- HEADER DO MODAL -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 flex justify-between items-center sticky top-0">
+                <div>
+                    <h2 class="text-2xl font-bold text-white" id="modalTitle">Detalhes da OC</h2>
+                    <p class="text-blue-100 text-sm" id="modalSubtitle">Número OC</p>
+                </div>
+                <button onclick="closeDetailsModal()" class="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- CONTEÚDO DO MODAL -->
+            <div class="p-6 space-y-6">
+                <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-box text-blue-600"></i>
+                        Informações Básicas
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">NÚMERO DA OC</p>
+                            <p class="text-lg font-bold text-gray-800" id="modalOC">-</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">ITEM</p>
+                            <p class="text-sm font-bold text-gray-800" id="modalItem">-</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">FORNECEDOR</p>
+                            <p class="text-sm font-bold text-gray-800" id="modalFornecedor">-</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">STATUS</p>
+                            <p class="text-sm font-bold text-gray-800" id="modalStatus">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2: QUANTIDADES E VALORES -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-calculator text-green-600"></i>
+                        Quantidades e Valores
+                    </h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">QUANTIDADE</p>
+                            <p class="text-2xl font-bold text-green-600" id="modalQtd">0</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">VALOR UNITÁRIO</p>
+                            <p class="text-lg font-bold text-green-600" id="modalValorUnit">R$ 0,00</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">VALOR TOTAL</p>
+                            <p class="text-2xl font-bold text-green-700" id="modalValorTotal">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3: DATAS -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-calendar text-purple-600"></i>
+                        Cronograma
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">DATA DE CRIAÇÃO</p>
+                            <p class="text-sm font-bold text-gray-800" id="modalDataCriacao">-</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">DATA ENTREGA ESPERADA</p>
+                            <p class="text-sm font-bold text-gray-800" id="modalDataEntrega">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 4: OBSERVAÇÕES -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-sticky-note text-yellow-600"></i>
+                        Observações
+                    </h3>
+                    <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                        <p class="text-sm text-gray-700" id="modalObservacoes">Nenhuma observação adicionada</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER DO MODAL -->
+            <div class="bg-gray-100 p-4 flex justify-end gap-3 sticky bottom-0">
+                <button onclick="closeDetailsModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-colors font-medium">
+                    Fechar
+                </button>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ===== VARIÁVEIS GLOBAIS =====
@@ -515,7 +621,7 @@
         // ===== CRIAR CARD =====
         function createCard(fields, recordId) {
             return `
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer" onclick="openDetailsModal('${fields['Número OC'] || 'N/A'}', ${JSON.stringify(fields).replace(/'/g, '&#39;')})">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">OC-${fields['Número OC'] || 'N/A'}</span>
                         <span class="text-xs text-gray-400"><i class="far fa-calendar-alt mr-1"></i>${formatDate(fields['Data de Criação'] || '')}</span>
@@ -700,6 +806,47 @@
                 startAutoRefresh();
             }
         }
+
+        // ===== MODAL DE DETALHES =====
+        function openDetailsModal(ocNumber, fieldsData) {
+            const fields = typeof fieldsData === 'string' ? JSON.parse(fieldsData) : fieldsData;
+            
+            document.getElementById('modalTitle').textContent = fields['Item'] || 'Detalhes da OC';
+            document.getElementById('modalSubtitle').textContent = `OC-${ocNumber}`;
+            document.getElementById('modalOC').textContent = `OC-${ocNumber}`;
+            document.getElementById('modalItem').textContent = fields['Item'] || '-';
+            document.getElementById('modalFornecedor').textContent = fields['Fornecedor'] || '-';
+            document.getElementById('modalStatus').textContent = fields['Select'] || '-';
+            document.getElementById('modalQtd').textContent = fields['Quantidade'] || '0';
+            document.getElementById('modalValorUnit').textContent = formatCurrency(fields['Valor Unitário'] || 0);
+            document.getElementById('modalValorTotal').textContent = formatCurrency(fields['Valor Total'] || 0);
+            document.getElementById('modalDataCriacao').textContent = formatDate(fields['Data de Criação'] || '');
+            document.getElementById('modalDataEntrega').textContent = formatDate(fields['Data de Entrega Esperada'] || '');
+            document.getElementById('modalObservacoes').textContent = fields['Observações'] || 'Nenhuma observação adicionada';
+            
+            document.getElementById('detailsModal').classList.remove('hidden');
+            console.log('📋 Modal aberto para OC:', ocNumber);
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+            console.log('📋 Modal fechado');
+        }
+
+        // Fechar modal ao clicar fora
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                closeDetailsModal();
+            }
+        });
+
+        // Fechar modal com ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeDetailsModal();
+            }
+        });
 
         // ===== INICIAR =====
         document.addEventListener('DOMContentLoaded', () => {
