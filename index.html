@@ -201,81 +201,83 @@
             <span class="block sm:inline" id="error-message"></span>
         </div>
 
-        <!-- Kanban Board -->
-        <div id="board" class="flex overflow-x-auto gap-4 pb-4 -mx-6 px-6">
-            
-            <!-- Coluna: Cotação -->
-            <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 280px;">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                        Cotação
-                    </h2>
-                    <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-cotacao">0</span>
+        <!-- Kanban Board Wrapper -->
+        <div class="overflow-x-auto -mx-6 px-6 pb-4">
+            <div id="board" class="inline-flex gap-3" style="min-width: min-content;">
+                
+                <!-- Coluna: Cotação -->
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                            Cotação
+                        </h2>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-cotacao">0</span>
+                    </div>
+                    <div id="col-cotacao" class="kanban-column space-y-2"></div>
                 </div>
-                <div id="col-cotacao" class="kanban-column space-y-2"></div>
-            </div>
 
-            <!-- Coluna: Negociação -->
-            <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 280px;">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                        Negociação
-                    </h2>
-                    <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-negociacao">0</span>
+                <!-- Coluna: Negociação -->
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                            Negociação
+                        </h2>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-negociacao">0</span>
+                    </div>
+                    <div id="col-negociacao" class="kanban-column space-y-2"></div>
                 </div>
-                <div id="col-negociacao" class="kanban-column space-y-2"></div>
-            </div>
 
-            <!-- Coluna: Ordem de Compra Emitida -->
-            <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 280px;">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                        OC Emitida
-                    </h2>
-                    <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-oc">0</span>
+                <!-- Coluna: Ordem de Compra Emitida -->
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            OC Emitida
+                        </h2>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-oc">0</span>
+                    </div>
+                    <div id="col-oc" class="kanban-column space-y-2"></div>
                 </div>
-                <div id="col-oc" class="kanban-column space-y-2"></div>
-            </div>
 
-            <!-- Coluna: Em Trânsito -->
-            <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 280px;">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                        Em Trânsito
-                    </h2>
-                    <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-transito">0</span>
+                <!-- Coluna: Em Trânsito -->
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            Em Trânsito
+                        </h2>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-transito">0</span>
+                    </div>
+                    <div id="col-transito" class="kanban-column space-y-2"></div>
                 </div>
-                <div id="col-transito" class="kanban-column space-y-2"></div>
-            </div>
 
-            <!-- Coluna: Recebido -->
-            <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 280px;">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                        Recebido
-                    </h2>
-                    <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-recebido">0</span>
+                <!-- Coluna: Recebido -->
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            Recebido
+                        </h2>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-recebido">0</span>
+                    </div>
+                    <div id="col-recebido" class="kanban-column space-y-2"></div>
                 </div>
-                <div id="col-recebido" class="kanban-column space-y-2"></div>
-            </div>
 
-            <!-- Coluna: Cancelado -->
-            <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 280px;">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                        Cancelado
-                    </h2>
-                    <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-cancelado">0</span>
+                <!-- Coluna: Cancelado -->
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            Cancelado
+                        </h2>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-cancelado">0</span>
+                    </div>
+                    <div id="col-cancelado" class="kanban-column space-y-2"></div>
                 </div>
-                <div id="col-cancelado" class="kanban-column space-y-2"></div>
-            </div>
 
+            </div>
         </div>
     </div>
 
