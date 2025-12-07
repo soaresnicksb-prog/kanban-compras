@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban de Compras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .kanban-column {
+            min-height: 500px;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="p-6">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Kanban de Compras</h1>
+                <p class="text-gray-600 mt-2">Gerenciamento de pedidos e cotações</p>
+            </div>
+            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden flex justify-center items-center h-64">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Erro!</strong>
+            <span class="block sm:inline" id="error-message"></span>
+        </div>
+
+        <!-- Kanban Board -->
+        <div id="board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 overflow-x-auto">
+            
+            <!-- Coluna: Cotação -->
+            <div class="bg-gray-200 p-4 rounded-xl min-w-[280px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        Cotação
+                    </h2>
+                    <span class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-sm font-semibold count-tag" id="count-cotacao">0</span>
+                </div>
+                <div id="col-cotacao" class="kanban-column space-y-3"></div>
+            </div>
+
+            <!-- Coluna: Ordem de Compra Emitida -->
+            <div class="bg-gray-200 p-4 rounded-xl min-w-[280px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                        OC Emitida
+                    </h2>
+                    <span class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-sm font-semibold count-tag" id="count-oc">0</span>
+                </div>
+                <div id="col-oc" class="kanban-column space-y-3"></div>
+            </div>
+
+            <!-- Coluna: Em Trânsito -->
+            <div class="bg-gray-200 p-4 rounded-xl min-w-[280px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                        Em Trânsito
+                    </h2>
+                    <span class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-sm font-semibold count-tag" id="count-transito">0</span>
+                </div>
+                <div id="col-transito" class="kanban-column space-y-3"></div>
+            </div>
+
+            <!-- Coluna: Recebido -->
+            <div class="bg-gray-200 p-4 rounded-xl min-w-[280px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        Recebido
+                    </h2>
+                    <span class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-sm font-semibold count-tag" id="count-recebido">0</span>
+                </div>
+                <div id="col-recebido" class="kanban-column space-y-3"></div>
+            </div>
+
+             <!-- Coluna: Cancelado -->
+             <div class="bg-gray-200 p-4 rounded-xl min-w-[280px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        Cancelado
+                    </h2>
+                    <span class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-sm font-semibold count-tag" id="count-cancelado">0</span>
+                </div>
+                <div id="col-cancelado" class="kanban-column space-y-3"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Mapeamento dos Status do Airtable para os IDs das colunas HTML
+        const statusMap = {
+            'Cotação': 'col-cotacao',
+            'Ordem de Compra Emitida': 'col-oc',
+            'Em Trânsito': 'col-transito',
+            'Recebido': 'col-recebido',
+            'Cancelado': 'col-cancelado'
+        };
+
+        const countMap = {
+            'Cotação': 'count-cotacao',
+            'Ordem de Compra Emitida': 'count-oc',
+            'Em Trânsito': 'count-transito',
+            'Recebido': 'count-recebido',
+            'Cancelado': 'count-cancelado'
+        };
+
+        // Função para formatar moeda
+        const formatCurrency = (value) => {
+            if (!value) return 'R$ 0,00';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        };
+
+        // Função principal de busca
+        async function fetchData() {
+            const loading = document.getElementById('loading');
+            const board = document.getElementById('board');
+            const errorDiv = document.getElementById('error');
+            const errorMsg = document.getElementById('error-message');
+
+            // Resetar estados
+            loading.classList.remove('hidden');
+            board.classList.add('opacity-50');
+            errorDiv.classList.add('hidden');
+            
+            // Limpar colunas
+            Object.values(statusMap).forEach(colId => {
+                document.getElementById(colId).innerHTML = '';
+            });
+            Object.values(countMap).forEach(countId => {
+                document.getElementById(countId).textContent = '0';
+            });
+
+            try {
+                // CHAMADA PARA SUA NOVA API PROXY
+                const response = await fetch('/api/proxy');
+                
+                if (!response.ok) throw new Error('Falha ao carregar dados');
+                
+                const data = await response.json();
+                const records = data.records || [];
+
+                // Contadores temporários
+                const counts = {
+                    'Cotação': 0,
+                    'Ordem de Compra Emitida': 0,
+                    'Em Trânsito': 0,
+                    'Recebido': 0,
+                    'Cancelado': 0
+                };
+
+                records.forEach(record => {
+                    const f = record.fields;
+                    const status = f.Select || 'Cotação'; // Fallback se não tiver status
+                    const colId = statusMap[status];
+
+                    if (colId) {
+                        counts[status]++;
+                        const card = createCard(f);
+                        document.getElementById(colId).insertAdjacentHTML('beforeend', card);
+                    }
+                });
+
+                // Atualizar contadores na tela
+                Object.keys(counts).forEach(key => {
+                    if (countMap[key]) {
+                        document.getElementById(countMap[key]).textContent = counts[key];
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+                errorMsg.textContent = 'Erro ao conectar com o servidor. Tente novamente.';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                board.classList.remove('opacity-50');
+            }
+        }
+
+        // Criar o HTML do Cartão
+        function createCard(fields) {
+            return `
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">OC-${fields['Número OC'] || 'N/A'}</span>
+                        <span class="text-xs text-gray-400"><i class="far fa-calendar-alt mr-1"></i>${fields['Data de Criação'] || ''}</span>
+                    </div>
+                    
+                    <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">${fields['Item'] || 'Sem título'}</h3>
+                    <p class="text-xs text-gray-500 mb-3 flex items-center">
+                        <i class="fas fa-store mr-1"></i> ${fields['Fornecedor'] || 'Fornecedor n/a'}
+                    </p>
+                    
+                    <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
+                        <div class="text-xs text-gray-500">
+                            Qtd: <span class="font-medium text-gray-700">${fields['Quantidade'] || 0}</span>
+                        </div>
+                        <div class="text-sm font-bold text-green-600">
+                            ${formatCurrency(fields['Valor Total'])}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Carregar dados ao iniciar
+        document.addEventListener('DOMContentLoaded', fetchData);
+    </script>
+</body>
+</html>
