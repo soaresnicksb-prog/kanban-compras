@@ -620,10 +620,11 @@
 
         // ===== CRIAR CARD =====
         function createCard(fields, recordId) {
+            const ocNumber = fields['Número OC'] || 'N/A';
             return `
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer" onclick="openDetailsModal('${fields['Número OC'] || 'N/A'}', ${JSON.stringify(fields).replace(/'/g, '&#39;')})">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer" data-oc-number="${ocNumber}" onclick="openDetailsModal(this)">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">OC-${fields['Número OC'] || 'N/A'}</span>
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">OC-${ocNumber}</span>
                         <span class="text-xs text-gray-400"><i class="far fa-calendar-alt mr-1"></i>${formatDate(fields['Data de Criação'] || '')}</span>
                     </div>
                     
@@ -808,8 +809,14 @@
         }
 
         // ===== MODAL DE DETALHES =====
-        function openDetailsModal(ocNumber, fieldsData) {
-            const fields = typeof fieldsData === 'string' ? JSON.parse(fieldsData) : fieldsData;
+        function openDetailsModal(cardElement) {
+            const ocNumber = cardElement.getAttribute('data-oc-number');
+            const fields = findRecordByOC(ocNumber);
+            
+            if (!fields) {
+                console.error('❌ Registro não encontrado para OC:', ocNumber);
+                return;
+            }
             
             document.getElementById('modalTitle').textContent = fields['Item'] || 'Detalhes da OC';
             document.getElementById('modalSubtitle').textContent = `OC-${ocNumber}`;
@@ -826,6 +833,15 @@
             
             document.getElementById('detailsModal').classList.remove('hidden');
             console.log('📋 Modal aberto para OC:', ocNumber);
+        }
+
+        function findRecordByOC(ocNumber) {
+            for (let record of allRecords) {
+                if (String(record.fields['Número OC']) === String(ocNumber)) {
+                    return record.fields;
+                }
+            }
+            return null;
         }
 
         function closeDetailsModal() {
