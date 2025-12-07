@@ -93,7 +93,7 @@
                 <div class="text-right text-xs">
                     <p class="text-gray-500 flex items-center">
                         <span class="pulse-dot"></span>
-                        Última atualização:
+                        Atualização automática:
                     </p>
                     <p class="font-mono text-gray-700" id="lastUpdate">--:--:--</p>
                 </div>
@@ -153,6 +153,7 @@
                         <option value="Em Trânsito">Em Trânsito</option>
                         <option value="Recebido">Recebido</option>
                         <option value="Cancelado">Cancelado</option>
+                        <option value="Negociação">Negociação</option>
                     </select>
                 </div>
 
@@ -276,13 +277,16 @@
         let currentUser = null;
         let autoRefreshInterval = null;
         let lastUpdateTime = null;
+        let isInitialLoad = true;
 
-        const statusMap = {
+        // STATUS MAP - MAPEAMENTO DINÂMICO
+        let statusMap = {
             'Cotação': 'col-cotacao',
             'Ordem de Compra Emitida': 'col-oc',
             'Em Trânsito': 'col-transito',
             'Recebido': 'col-recebido',
-            'Cancelado': 'col-cancelado'
+            'Cancelado': 'col-cancelado',
+            'Negociação': 'col-cotacao' // Default fallback para status desconhecidos
         };
 
         const countMap = {
@@ -290,7 +294,8 @@
             'Ordem de Compra Emitida': 'count-oc',
             'Em Trânsito': 'count-transito',
             'Recebido': 'count-recebido',
-            'Cancelado': 'count-cancelado'
+            'Cancelado': 'count-cancelado',
+            'Negociação': 'count-cotacao'
         };
 
         // ===== FUNÇÕES AUXILIARES =====
@@ -319,20 +324,29 @@
             const minutes = String(lastUpdateTime.getMinutes()).padStart(2, '0');
             const seconds = String(lastUpdateTime.getSeconds()).padStart(2, '0');
             document.getElementById('lastUpdate').textContent = `${hours}:${minutes}:${seconds}`;
+            console.log('✅ Dados atualizados em', `${hours}:${minutes}:${seconds}`);
         };
 
-        // ===== AUTO-REFRESH =====
+        // ===== AUTO-REFRESH - CORRIGIDO =====
         function startAutoRefresh() {
-            // Atualizar a cada 30 segundos
+            // Limpar intervalo anterior se existir
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // Atualizar a cada 60 segundos (mais estável)
+            console.log('🔄 Auto-refresh iniciado - atualiza a cada 60 segundos');
             autoRefreshInterval = setInterval(() => {
+                console.log('🔄 Atualizando dados automaticamente...');
                 fetchData();
-            }, 30000);
+            }, 60000); // 60 segundos ao invés de 30
         }
 
         function stopAutoRefresh() {
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
                 autoRefreshInterval = null;
+                console.log('⏹️ Auto-refresh parado');
             }
         }
 
@@ -343,23 +357,29 @@
             const errorDiv = document.getElementById('error');
             const errorMsg = document.getElementById('error-message');
 
-            loading.classList.remove('hidden');
+            if (isInitialLoad) {
+                loading.classList.remove('hidden');
+            }
             board.classList.add('opacity-50');
             errorDiv.classList.add('hidden');
 
             try {
+                console.log('📡 Buscando dados do servidor...');
                 const response = await fetch('/api/proxy');
                 if (!response.ok) throw new Error('Falha ao carregar dados');
                 
                 const data = await response.json();
                 allRecords = data.records || [];
                 
+                console.log(`📊 ${allRecords.length} registros carregados`);
+                
                 populateFornecedorDropdown();
                 applyFilters();
                 updateLastUpdateTime();
+                isInitialLoad = false;
 
             } catch (error) {
-                console.error(error);
+                console.error('❌ Erro ao carregar dados:', error);
                 errorMsg.textContent = 'Erro ao conectar com o servidor. Tente novamente.';
                 errorDiv.classList.remove('hidden');
             } finally {
@@ -432,39 +452,48 @@
             document.getElementById('totalCount').textContent = allRecords.length;
         }
 
-        // ===== RENDERIZAR KANBAN =====
+        // ===== RENDERIZAR KANBAN - TRATAMENTO DE STATUS DINÂMICOS =====
         function renderKanban(records) {
+            // Limpar colunas existentes
             Object.values(statusMap).forEach(colId => {
-                document.getElementById(colId).innerHTML = '';
+                const col = document.getElementById(colId);
+                if (col) col.innerHTML = '';
             });
 
+            // Resetar contadores
             Object.values(countMap).forEach(countId => {
-                document.getElementById(countId).textContent = '0';
+                const tag = document.getElementById(countId);
+                if (tag) tag.textContent = '0';
             });
 
-            const counts = {
-                'Cotação': 0,
-                'Ordem de Compra Emitida': 0,
-                'Em Trânsito': 0,
-                'Recebido': 0,
-                'Cancelado': 0
-            };
+            const counts = {};
 
+            // Renderizar cards e contar por status
             records.forEach(record => {
                 const f = record.fields;
                 const status = f['Select'] || 'Cotação';
-                const colId = statusMap[status];
+                
+                // Se status não existe, usar 'Cotação' como fallback
+                const colId = statusMap[status] || statusMap['Cotação'];
+                const countId = countMap[status] || countMap['Cotação'];
 
-                if (colId) {
-                    counts[status]++;
+                if (!counts[status]) counts[status] = 0;
+                counts[status]++;
+
+                const col = document.getElementById(colId);
+                if (col) {
                     const card = createCard(f, record.id);
-                    document.getElementById(colId).insertAdjacentHTML('beforeend', card);
+                    col.insertAdjacentHTML('beforeend', card);
                 }
             });
 
-            Object.keys(counts).forEach(key => {
-                if (countMap[key]) {
-                    document.getElementById(countMap[key]).textContent = counts[key];
+            // Atualizar contadores
+            Object.keys(counts).forEach(status => {
+                const countId = countMap[status] || countMap['Cotação'];
+                const tag = document.getElementById(countId);
+                if (tag) {
+                    const currentCount = parseInt(tag.textContent) || 0;
+                    tag.textContent = currentCount + counts[status];
                 }
             });
         }
@@ -533,11 +562,9 @@
                 return;
             }
 
-            // Criar tabela HTML
             const table = document.getElementById('exportTable');
             table.innerHTML = '';
 
-            // Cabeçalho
             const thead = table.createTHead();
             const headerRow = thead.insertRow();
             headerRow.style.backgroundColor = '#2563eb';
@@ -552,7 +579,6 @@
                 cell.style.border = '1px solid #000';
             });
 
-            // Dados
             const tbody = table.createTBody();
             filteredRecords.forEach((record, index) => {
                 const f = record.fields;
@@ -579,10 +605,8 @@
                 });
             });
 
-            // Exportar com SheetJS
             const ws = XLSX.utils.table_to_sheet(table);
             
-            // Ajustar largura das colunas
             ws['!cols'] = [
                 { wch: 10 },  // Nº OC
                 { wch: 35 },  // Item
@@ -599,6 +623,7 @@
             
             const fileName = `kanban-compras-${new Date().toISOString().slice(0, 10)}.xlsx`;
             XLSX.writeFile(wb, fileName);
+            console.log('📥 Arquivo exportado:', fileName);
         }
 
         // ===== LOGIN SYSTEM =====
@@ -613,7 +638,6 @@
                 return;
             }
 
-            // Validação básica de email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 loginError.textContent = 'Email inválido. Tente novamente.';
@@ -621,17 +645,15 @@
                 return;
             }
 
-            // Salvar sessão no localStorage
             currentUser = email;
             localStorage.setItem('kanban_user', email);
             loginError.classList.add('hidden');
 
-            // Mostrar app, esconder login
             document.getElementById('loginModal').classList.add('hidden');
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('userEmail').textContent = email;
 
-            // Carregar dados e iniciar auto-refresh
+            console.log('✅ Login bem-sucedido:', email);
             fetchData();
             startAutoRefresh();
         }
@@ -642,14 +664,13 @@
                 localStorage.removeItem('kanban_user');
                 stopAutoRefresh();
                 
-                // Voltar ao login
                 document.getElementById('appContent').classList.add('hidden');
                 document.getElementById('loginModal').classList.remove('hidden');
                 document.getElementById('emailInput').value = '';
                 
-                // Limpar dados
                 allRecords = [];
                 filteredRecords = [];
+                console.log('👋 Logout realizado');
             }
         }
 
@@ -660,13 +681,17 @@
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('appContent').classList.remove('hidden');
                 document.getElementById('userEmail').textContent = savedUser;
+                console.log('🔓 Usuário autenticado:', savedUser);
                 fetchData();
                 startAutoRefresh();
             }
         }
 
         // ===== INICIAR =====
-        document.addEventListener('DOMContentLoaded', checkAuth);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Aplicação iniciada');
+            checkAuth();
+        });
     </script>
 </body>
 </html>
