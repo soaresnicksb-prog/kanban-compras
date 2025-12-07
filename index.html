@@ -90,8 +90,13 @@
                     <p class="font-semibold text-gray-800" id="userEmail">-</p>
                 </div>
                 <div class="border-l border-gray-300 h-8"></div>
-                <button onclick="loadSampleData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i> Carregar Dados
+                <div class="text-right text-xs">
+                    <p class="text-gray-500">Última atualização:</p>
+                    <p class="font-mono text-gray-700" id="lastUpdate">--:--:--</p>
+                </div>
+                <div class="border-l border-gray-300 h-8"></div>
+                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Atualizar
                 </button>
                 <button onclick="exportToXLSX()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                     <i class="fas fa-download"></i> Exportar
@@ -343,6 +348,7 @@
         let allRecords = [];
         let filteredRecords = [];
         let currentUser = null;
+        let lastUpdateTime = null;
 
         const formatCurrency = (value) => {
             if (!value) return 'R$ 0,00';
@@ -362,6 +368,37 @@
             const diffTime = Math.abs(today - date);
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
+
+        const updateLastUpdateTime = () => {
+            lastUpdateTime = new Date();
+            const hours = String(lastUpdateTime.getHours()).padStart(2, '0');
+            const minutes = String(lastUpdateTime.getMinutes()).padStart(2, '0');
+            const seconds = String(lastUpdateTime.getSeconds()).padStart(2, '0');
+            document.getElementById('lastUpdate').textContent = `${hours}:${minutes}:${seconds}`;
+            console.log('✅ Dados atualizados em', `${hours}:${minutes}:${seconds}`);
+        };
+
+        async function fetchData() {
+            try {
+                console.log('📡 Buscando dados do servidor...');
+                const response = await fetch('/api/proxy');
+                if (!response.ok) throw new Error('Falha ao carregar dados');
+                
+                const data = await response.json();
+                allRecords = data.records || [];
+                
+                console.log(`📊 ${allRecords.length} registros carregados`);
+                
+                populateFornecedorDropdown();
+                applyFilters();
+                updateLastUpdateTime();
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                console.log('⚠️ Usando dados de exemplo como fallback');
+                loadSampleData();
+            }
+        }
 
         function loadSampleData() {
             allRecords = [
@@ -630,7 +667,8 @@
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('appContent').classList.remove('hidden');
                 document.getElementById('userEmail').textContent = user;
-                loadSampleData();
+                console.log('🔓 Usuário autenticado:', user);
+                fetchData();
             }
         }
 
