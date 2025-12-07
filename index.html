@@ -90,19 +90,11 @@
                     <p class="font-semibold text-gray-800" id="userEmail">-</p>
                 </div>
                 <div class="border-l border-gray-300 h-8"></div>
-                <div class="text-right text-xs">
-                    <p class="text-gray-500 flex items-center">
-                        <span class="pulse-dot"></span>
-                        Atualização automática:
-                    </p>
-                    <p class="font-mono text-gray-700" id="lastUpdate">--:--:--</p>
-                </div>
-                <div class="border-l border-gray-300 h-8"></div>
-                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i> Atualizar
+                <button onclick="loadSampleData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Carregar Dados
                 </button>
                 <button onclick="exportToXLSX()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fas fa-download"></i> Exportar Excel
+                    <i class="fas fa-download"></i> Exportar
                 </button>
                 <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -115,19 +107,17 @@
             <h2 class="text-lg font-bold text-gray-800 mb-4">🔍 Filtros & Busca</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <!-- BUSCA -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Buscar (OC ou Item)</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Buscar</label>
                     <input 
                         type="text" 
                         id="searchInput" 
-                        placeholder="Digite número OC ou nome do item..."
+                        placeholder="Digite OC ou item..."
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                         onkeyup="applyFilters()"
                     >
                 </div>
 
-                <!-- FORNECEDOR -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Fornecedor</label>
                     <select 
@@ -135,11 +125,10 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                         onchange="applyFilters()"
                     >
-                        <option value="">Todos os fornecedores</option>
+                        <option value="">Todos</option>
                     </select>
                 </div>
 
-                <!-- STATUS -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                     <select 
@@ -147,17 +136,16 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                         onchange="applyFilters()"
                     >
-                        <option value="">Todos os status</option>
+                        <option value="">Todos</option>
                         <option value="Cotação">Cotação</option>
-                        <option value="Ordem de Compra Emitida">OC Emitida</option>
+                        <option value="Negociação">Negociação</option>
+                        <option value="OC Emitida">OC Emitida</option>
                         <option value="Em Trânsito">Em Trânsito</option>
                         <option value="Recebido">Recebido</option>
                         <option value="Cancelado">Cancelado</option>
-                        <option value="Negociação">Negociação</option>
                     </select>
                 </div>
 
-                <!-- DATA -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Período</label>
                     <select 
@@ -165,7 +153,7 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                         onchange="applyFilters()"
                     >
-                        <option value="">Todos os períodos</option>
+                        <option value="">Todos</option>
                         <option value="7">Últimos 7 dias</option>
                         <option value="30">Últimos 30 dias</option>
                         <option value="90">Últimos 90 dias</option>
@@ -173,121 +161,90 @@
                 </div>
             </div>
 
-            <!-- FILTROS ATIVOS -->
             <div id="activeFilters" class="mb-4"></div>
 
-            <!-- BOTÃO LIMPAR -->
             <button 
                 onclick="clearFilters()" 
                 class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
-                🧹 Limpar Filtros
+                🧹 Limpar
             </button>
 
-            <!-- CONTADOR -->
             <div class="mt-4 text-sm text-gray-600">
                 Exibindo <span id="filteredCount">0</span> de <span id="totalCount">0</span> registros
             </div>
         </div>
 
-        <!-- Loading State -->
-        <div id="loading" class="hidden flex justify-center items-center h-64">
-            <div class="loading-spinner"></div>
-        </div>
-
-        <!-- Error State -->
-        <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-            <strong class="font-bold">Erro!</strong>
-            <span class="block sm:inline" id="error-message"></span>
-        </div>
-
-        <!-- Kanban Board Wrapper -->
+        <!-- Kanban Board -->
         <div class="w-full overflow-x-auto pb-6">
-            <div id="board" class="flex gap-4" style="width: 100%; min-width: fit-content; display: flex;">
+            <div id="board" class="flex gap-4" style="width: 100%; min-width: fit-content;">
                 
-                <!-- Coluna: Cotação -->
-                <div class="bg-gray-200 p-3 rounded-lg" style="width: 260px; min-width: 260px; flex-shrink: 0;">
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px;">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                            Cotação
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span> Cotação
                         </h2>
-                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-cotacao">0</span>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs" id="count-Cotação">0</span>
                     </div>
-                    <div id="col-cotacao" class="kanban-column space-y-2"></div>
+                    <div id="col-Cotação" class="kanban-column space-y-2"></div>
                 </div>
 
-                <!-- Coluna: Negociação -->
-                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px;">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                            Negociação
+                            <span class="w-2 h-2 rounded-full bg-orange-500"></span> Negociação
                         </h2>
-                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-negociacao">0</span>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs" id="count-Negociação">0</span>
                     </div>
-                    <div id="col-negociacao" class="kanban-column space-y-2"></div>
+                    <div id="col-Negociação" class="kanban-column space-y-2"></div>
                 </div>
 
-                <!-- Coluna: Ordem de Compra Emitida -->
-                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px;">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            OC Emitida
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> OC Emitida
                         </h2>
-                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-oc">0</span>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs" id="count-OC Emitida">0</span>
                     </div>
-                    <div id="col-oc" class="kanban-column space-y-2"></div>
+                    <div id="col-OC Emitida" class="kanban-column space-y-2"></div>
                 </div>
 
-                <!-- Coluna: Em Trânsito -->
-                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px;">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                            Em Trânsito
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span> Em Trânsito
                         </h2>
-                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-transito">0</span>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs" id="count-Em Trânsito">0</span>
                     </div>
-                    <div id="col-transito" class="kanban-column space-y-2"></div>
+                    <div id="col-Em Trânsito" class="kanban-column space-y-2"></div>
                 </div>
 
-                <!-- Coluna: Recebido -->
-                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px;">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                            Recebido
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span> Recebido
                         </h2>
-                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-recebido">0</span>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs" id="count-Recebido">0</span>
                     </div>
-                    <div id="col-recebido" class="kanban-column space-y-2"></div>
+                    <div id="col-Recebido" class="kanban-column space-y-2"></div>
                 </div>
 
-                <!-- Coluna: Cancelado -->
-                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px; min-width: 260px;">
+                <div class="bg-gray-200 p-3 rounded-lg flex-shrink-0" style="width: 260px;">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            Cancelado
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span> Cancelado
                         </h2>
-                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold count-tag" id="count-cancelado">0</span>
+                        <span class="bg-gray-300 text-gray-600 px-2 py-0.5 rounded text-xs" id="count-Cancelado">0</span>
                     </div>
-                    <div id="col-cancelado" class="kanban-column space-y-2"></div>
+                    <div id="col-Cancelado" class="kanban-column space-y-2"></div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- Tabela oculta para exportação -->
-    <table id="exportTable" style="display: none;"></table>
-
-    <!-- MODAL DE DETALHES DO CARD -->
+    <!-- MODAL DE DETALHES -->
     <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-90vh overflow-y-auto">
-            <!-- HEADER DO MODAL -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 flex justify-between items-center sticky top-0">
                 <div>
                     <h2 class="text-2xl font-bold text-white" id="modalTitle">Detalhes da OC</h2>
@@ -298,13 +255,10 @@
                 </button>
             </div>
 
-            <!-- CONTEÚDO DO MODAL -->
             <div class="p-6 space-y-6">
-                <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
                 <div>
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-box text-blue-600"></i>
-                        Informações Básicas
+                        <i class="fas fa-box text-blue-600"></i> Informações Básicas
                     </h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-gray-50 p-4 rounded-lg">
@@ -326,11 +280,9 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 2: QUANTIDADES E VALORES -->
                 <div>
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-calculator text-green-600"></i>
-                        Quantidades e Valores
+                        <i class="fas fa-calculator text-green-600"></i> Quantidades e Valores
                     </h3>
                     <div class="grid grid-cols-3 gap-4">
                         <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
@@ -348,11 +300,9 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 3: DATAS -->
                 <div>
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-calendar text-purple-600"></i>
-                        Cronograma
+                        <i class="fas fa-calendar text-purple-600"></i> Cronograma
                     </h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-purple-50 p-4 rounded-lg">
@@ -360,25 +310,22 @@
                             <p class="text-sm font-bold text-gray-800" id="modalDataCriacao">-</p>
                         </div>
                         <div class="bg-purple-50 p-4 rounded-lg">
-                            <p class="text-xs text-gray-500 font-semibold mb-1">DATA ENTREGA ESPERADA</p>
+                            <p class="text-xs text-gray-500 font-semibold mb-1">DATA ENTREGA</p>
                             <p class="text-sm font-bold text-gray-800" id="modalDataEntrega">-</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- SEÇÃO 4: OBSERVAÇÕES -->
                 <div>
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-sticky-note text-yellow-600"></i>
-                        Observações
+                        <i class="fas fa-sticky-note text-yellow-600"></i> Observações
                     </h3>
                     <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
-                        <p class="text-sm text-gray-700" id="modalObservacoes">Nenhuma observação adicionada</p>
+                        <p class="text-sm text-gray-700" id="modalObservacoes">Nenhuma observação</p>
                     </div>
                 </div>
             </div>
 
-            <!-- FOOTER DO MODAL -->
             <div class="bg-gray-100 p-4 flex justify-end gap-3 sticky bottom-0">
                 <button onclick="closeDetailsModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-colors font-medium">
                     Fechar
@@ -390,42 +337,20 @@
         </div>
     </div>
 
+    <table id="exportTable" style="display: none;"></table>
+
     <script>
-        // ===== VARIÁVEIS GLOBAIS =====
         let allRecords = [];
         let filteredRecords = [];
         let currentUser = null;
-        let autoRefreshInterval = null;
-        let lastUpdateTime = null;
-        let isInitialLoad = true;
 
-        // STATUS MAP - MAPEAMENTO DINÂMICO
-        let statusMap = {
-            'Cotação': 'col-cotacao',
-            'Ordem de Compra Emitida': 'col-oc',
-            'Em Trânsito': 'col-transito',
-            'Recebido': 'col-recebido',
-            'Cancelado': 'col-cancelado',
-            'Negociação': 'col-negociacao'
-        };
-
-        const countMap = {
-            'Cotação': 'count-cotacao',
-            'Ordem de Compra Emitida': 'count-oc',
-            'Em Trânsito': 'count-transito',
-            'Recebido': 'count-recebido',
-            'Cancelado': 'count-cancelado',
-            'Negociação': 'count-negociacao'
-        };
-
-        // ===== FUNÇÕES AUXILIARES =====
         const formatCurrency = (value) => {
             if (!value) return 'R$ 0,00';
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
         };
 
         const formatDate = (dateString) => {
-            if (!dateString) return '';
+            if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('pt-BR');
         };
@@ -438,236 +363,192 @@
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
 
-        const updateLastUpdateTime = () => {
-            lastUpdateTime = new Date();
-            const hours = String(lastUpdateTime.getHours()).padStart(2, '0');
-            const minutes = String(lastUpdateTime.getMinutes()).padStart(2, '0');
-            const seconds = String(lastUpdateTime.getSeconds()).padStart(2, '0');
-            document.getElementById('lastUpdate').textContent = `${hours}:${minutes}:${seconds}`;
-            console.log('✅ Dados atualizados em', `${hours}:${minutes}:${seconds}`);
-        };
-
-        // ===== AUTO-REFRESH - CORRIGIDO =====
-        function startAutoRefresh() {
-            // Limpar intervalo anterior se existir
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-            }
-            
-            // Atualizar a cada 60 segundos (mais estável)
-            console.log('🔄 Auto-refresh iniciado - atualiza a cada 60 segundos');
-            autoRefreshInterval = setInterval(() => {
-                console.log('🔄 Atualizando dados automaticamente...');
-                fetchData();
-            }, 60000); // 60 segundos ao invés de 30
+        function loadSampleData() {
+            allRecords = [
+                {
+                    id: '1',
+                    fields: {
+                        'Número OC': '001',
+                        'Item': 'Parafuso M8',
+                        'Fornecedor': 'Metalúrgica ABC',
+                        'Quantidade': 500,
+                        'Valor Unitário': 2.50,
+                        'Valor Total': 1250.00,
+                        'Status': 'Cotação',
+                        'Data de Criação': new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Data de Entrega Esperada': new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Observações': 'Aguardando confirmação'
+                    }
+                },
+                {
+                    id: '2',
+                    fields: {
+                        'Número OC': '002',
+                        'Item': 'Corrente de Aço',
+                        'Fornecedor': 'Siderúrgica XYZ',
+                        'Quantidade': 100,
+                        'Valor Unitário': 45.00,
+                        'Valor Total': 4500.00,
+                        'Status': 'Negociação',
+                        'Data de Criação': new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Data de Entrega Esperada': new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Observações': 'Negociando desconto'
+                    }
+                },
+                {
+                    id: '3',
+                    fields: {
+                        'Número OC': '003',
+                        'Item': 'Placa de Alumínio',
+                        'Fornecedor': 'Indústria Leve',
+                        'Quantidade': 50,
+                        'Valor Unitário': 150.00,
+                        'Valor Total': 7500.00,
+                        'Status': 'OC Emitida',
+                        'Data de Criação': new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Data de Entrega Esperada': new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Observações': 'OC confirmada'
+                    }
+                },
+                {
+                    id: '4',
+                    fields: {
+                        'Número OC': '004',
+                        'Item': 'Cabo Elétrico',
+                        'Fornecedor': 'Indústria Leve',
+                        'Quantidade': 200,
+                        'Valor Unitário': 8.75,
+                        'Valor Total': 1750.00,
+                        'Status': 'Em Trânsito',
+                        'Data de Criação': new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Data de Entrega Esperada': new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Observações': 'Saiu do estoque'
+                    }
+                },
+                {
+                    id: '5',
+                    fields: {
+                        'Número OC': '005',
+                        'Item': 'Motor Elétrico',
+                        'Fornecedor': 'Metalúrgica ABC',
+                        'Quantidade': 10,
+                        'Valor Unitário': 500.00,
+                        'Valor Total': 5000.00,
+                        'Status': 'Recebido',
+                        'Data de Criação': new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Data de Entrega Esperada': new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        'Observações': 'Recebido e conferido'
+                    }
+                }
+            ];
+            populateFornecedorDropdown();
+            applyFilters();
+            console.log('✅ Dados carregados:', allRecords.length);
         }
 
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-                console.log('⏹️ Auto-refresh parado');
-            }
-        }
-
-        // ===== FETCH DADOS =====
-        async function fetchData() {
-            const loading = document.getElementById('loading');
-            const board = document.getElementById('board');
-            const errorDiv = document.getElementById('error');
-            const errorMsg = document.getElementById('error-message');
-
-            if (isInitialLoad) {
-                loading.classList.remove('hidden');
-            }
-            board.classList.add('opacity-50');
-            errorDiv.classList.add('hidden');
-
-            try {
-                console.log('📡 Buscando dados do servidor...');
-                const response = await fetch('/api/proxy');
-                if (!response.ok) throw new Error('Falha ao carregar dados');
-                
-                const data = await response.json();
-                allRecords = data.records || [];
-                
-                console.log(`📊 ${allRecords.length} registros carregados`);
-                
-                populateFornecedorDropdown();
-                applyFilters();
-                updateLastUpdateTime();
-                isInitialLoad = false;
-
-            } catch (error) {
-                console.error('❌ Erro ao carregar dados:', error);
-                errorMsg.textContent = 'Erro ao conectar com o servidor. Tente novamente.';
-                errorDiv.classList.remove('hidden');
-            } finally {
-                loading.classList.add('hidden');
-                board.classList.remove('opacity-50');
-            }
-        }
-
-        // ===== POPULATE FORNECEDORES =====
         function populateFornecedorDropdown() {
-            const fornecedores = new Set();
-            allRecords.forEach(record => {
-                const f = record.fields['Fornecedor'];
-                if (f) fornecedores.add(f);
-            });
-
+            const fornecedores = new Set(allRecords.map(r => r.fields['Fornecedor']));
             const select = document.getElementById('fornecedorFilter');
-            while (select.options.length > 1) {
-                select.remove(1);
-            }
-
-            Array.from(fornecedores).sort().forEach(fornecedor => {
+            select.innerHTML = '<option value="">Todos</option>';
+            Array.from(fornecedores).sort().forEach(f => {
                 const option = document.createElement('option');
-                option.value = fornecedor;
-                option.textContent = fornecedor;
+                option.value = f;
+                option.textContent = f;
                 select.appendChild(option);
             });
         }
 
-        // ===== APLICAR FILTROS =====
         function applyFilters() {
-            const searchValue = document.getElementById('searchInput').value.toLowerCase();
-            const fornecedorValue = document.getElementById('fornecedorFilter').value;
-            const statusValue = document.getElementById('statusFilter').value;
-            const dataValue = document.getElementById('dataFilter').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const fornecedor = document.getElementById('fornecedorFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const dias = document.getElementById('dataFilter').value;
 
             filteredRecords = allRecords.filter(record => {
                 const f = record.fields;
                 
-                if (searchValue) {
-                    const oc = String(f['Número OC'] || '').toLowerCase();
-                    const item = String(f['Item'] || '').toLowerCase();
-                    if (!oc.includes(searchValue) && !item.includes(searchValue)) {
-                        return false;
-                    }
-                }
-
-                if (fornecedorValue && f['Fornecedor'] !== fornecedorValue) {
-                    return false;
-                }
-
-                if (statusValue && f['Select'] !== statusValue) {
-                    return false;
-                }
-
-                if (dataValue) {
-                    const daysOld = getDaysOld(f['Data de Criação']);
-                    if (daysOld > parseInt(dataValue)) {
-                        return false;
-                    }
-                }
-
+                if (search && !String(f['Número OC']).includes(search) && !f['Item'].toLowerCase().includes(search)) return false;
+                if (fornecedor && f['Fornecedor'] !== fornecedor) return false;
+                if (status && f['Status'] !== status) return false;
+                if (dias && getDaysOld(f['Data de Criação']) > parseInt(dias)) return false;
+                
                 return true;
             });
 
-            renderKanban(filteredRecords);
-            updateActiveFilters();
-
+            renderKanban();
             document.getElementById('filteredCount').textContent = filteredRecords.length;
             document.getElementById('totalCount').textContent = allRecords.length;
         }
 
-        // ===== RENDERIZAR KANBAN - TRATAMENTO DE STATUS DINÂMICOS =====
-        function renderKanban(records) {
-            // Limpar colunas existentes
-            Object.values(statusMap).forEach(colId => {
-                const col = document.getElementById(colId);
-                if (col) col.innerHTML = '';
-            });
-
-            // Resetar contadores
-            Object.values(countMap).forEach(countId => {
-                const tag = document.getElementById(countId);
-                if (tag) tag.textContent = '0';
-            });
-
-            const counts = {};
-
-            // Renderizar cards e contar por status
-            records.forEach(record => {
-                const f = record.fields;
-                const status = f['Select'] || 'Cotação';
+        function renderKanban() {
+            const statuses = ['Cotação', 'Negociação', 'OC Emitida', 'Em Trânsito', 'Recebido', 'Cancelado'];
+            
+            statuses.forEach(status => {
+                const col = document.getElementById(`col-${status}`);
+                const count = document.getElementById(`count-${status}`);
+                col.innerHTML = '';
                 
-                // Mapeamento de status - Negociação agora tem coluna própria
-                const colId = statusMap[status] || statusMap['Cotação'];
-                const countId = countMap[status] || countMap['Cotação'];
-
-                if (!counts[status]) counts[status] = 0;
-                counts[status]++;
-
-                const col = document.getElementById(colId);
-                if (col) {
-                    const card = createCard(f, record.id);
-                    col.insertAdjacentHTML('beforeend', card);
-                }
-            });
-
-            // Atualizar contadores
-            Object.keys(counts).forEach(status => {
-                const countId = countMap[status] || countMap['Cotação'];
-                const tag = document.getElementById(countId);
-                if (tag) {
-                    const currentCount = parseInt(tag.textContent) || 0;
-                    tag.textContent = currentCount + counts[status];
-                }
+                const records = filteredRecords.filter(r => r.fields['Status'] === status);
+                count.textContent = records.length;
+                
+                records.forEach(record => {
+                    const f = record.fields;
+                    col.innerHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer" onclick="openDetailsModal('${f['Número OC']}')">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">OC-${f['Número OC']}</span>
+                                <span class="text-xs text-gray-400">${formatDate(f['Data de Criação'])}</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">${f['Item']}</h3>
+                            <p class="text-xs text-gray-500 mb-3"><i class="fas fa-store mr-1"></i>${f['Fornecedor']}</p>
+                            <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
+                                <div class="text-xs text-gray-500">Qtd: <span class="font-medium">${f['Quantidade']}</span></div>
+                                <div class="text-sm font-bold text-green-600">${formatCurrency(f['Valor Total'])}</div>
+                            </div>
+                        </div>
+                    `;
+                });
             });
         }
 
-        // ===== CRIAR CARD =====
-        function createCard(fields, recordId) {
-            const ocNumber = fields['Número OC'] || 'N/A';
-            return `
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 card-hover transition-all duration-200 cursor-pointer" data-oc-number="${ocNumber}" onclick="openDetailsModal(this)">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">OC-${ocNumber}</span>
-                        <span class="text-xs text-gray-400"><i class="far fa-calendar-alt mr-1"></i>${formatDate(fields['Data de Criação'] || '')}</span>
-                    </div>
-                    
-                    <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">${fields['Item'] || 'Sem título'}</h3>
-                    <p class="text-xs text-gray-500 mb-3 flex items-center">
-                        <i class="fas fa-store mr-1"></i> ${fields['Fornecedor'] || 'Fornecedor n/a'}
-                    </p>
-                    
-                    <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
-                        <div class="text-xs text-gray-500">
-                            Qtd: <span class="font-medium text-gray-700">${fields['Quantidade'] || 0}</span>
-                        </div>
-                        <div class="text-sm font-bold text-green-600">
-                            ${formatCurrency(fields['Valor Total'])}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ===== ATUALIZAR FILTROS ATIVOS =====
-        function updateActiveFilters() {
-            const filters = [];
-            const search = document.getElementById('searchInput').value;
-            const fornecedor = document.getElementById('fornecedorFilter').value;
-            const status = document.getElementById('statusFilter').value;
-            const data = document.getElementById('dataFilter').value;
-
-            if (search) filters.push(`Busca: "${search}"`);
-            if (fornecedor) filters.push(`Fornecedor: ${fornecedor}`);
-            if (status) filters.push(`Status: ${status}`);
-            if (data) filters.push(`Período: Últimos ${data} dias`);
-
-            const container = document.getElementById('activeFilters');
-            if (filters.length > 0) {
-                container.innerHTML = '<div><strong>Filtros ativos:</strong> ' + filters.join(' | ') + '</div>';
-                container.classList.remove('hidden');
-            } else {
-                container.classList.add('hidden');
+        function openDetailsModal(ocNumber) {
+            const record = allRecords.find(r => String(r.fields['Número OC']) === String(ocNumber));
+            if (!record) {
+                console.error('❌ OC não encontrada');
+                return;
             }
+
+            const f = record.fields;
+            document.getElementById('modalTitle').textContent = f['Item'];
+            document.getElementById('modalSubtitle').textContent = `OC-${f['Número OC']}`;
+            document.getElementById('modalOC').textContent = `OC-${f['Número OC']}`;
+            document.getElementById('modalItem').textContent = f['Item'];
+            document.getElementById('modalFornecedor').textContent = f['Fornecedor'];
+            document.getElementById('modalStatus').textContent = f['Status'];
+            document.getElementById('modalQtd').textContent = f['Quantidade'];
+            document.getElementById('modalValorUnit').textContent = formatCurrency(f['Valor Unitário']);
+            document.getElementById('modalValorTotal').textContent = formatCurrency(f['Valor Total']);
+            document.getElementById('modalDataCriacao').textContent = formatDate(f['Data de Criação']);
+            document.getElementById('modalDataEntrega').textContent = formatDate(f['Data de Entrega Esperada']);
+            document.getElementById('modalObservacoes').textContent = f['Observações'] || 'Nenhuma';
+
+            document.getElementById('detailsModal').classList.remove('hidden');
+            console.log('📋 Modal aberto para OC:', ocNumber);
         }
 
-        // ===== LIMPAR FILTROS =====
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('detailsModal');
+            if (e.target === modal) closeDetailsModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDetailsModal();
+        });
+
         function clearFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('fornecedorFilter').value = '';
@@ -676,197 +557,85 @@
             applyFilters();
         }
 
-        // ===== EXPORT EXCEL PROFISSIONAL =====
         function exportToXLSX() {
             if (filteredRecords.length === 0) {
-                alert('Nenhum registro para exportar');
+                alert('Nenhum registro');
                 return;
             }
 
             const table = document.getElementById('exportTable');
             table.innerHTML = '';
-
+            
             const thead = table.createTHead();
             const headerRow = thead.insertRow();
             headerRow.style.backgroundColor = '#2563eb';
             headerRow.style.color = 'white';
-            headerRow.style.fontWeight = 'bold';
-
-            const headers = ['Nº OC', 'Item', 'Fornecedor', 'Status', 'Quantidade', 'Valor Total', 'Data Criação', 'Data Entrega'];
-            headers.forEach(header => {
+            
+            ['Nº OC', 'Item', 'Fornecedor', 'Status', 'Qtd', 'Valor Total', 'Data Criação'].forEach(h => {
                 const cell = headerRow.insertCell();
-                cell.textContent = header;
+                cell.textContent = h;
                 cell.style.padding = '10px';
-                cell.style.border = '1px solid #000';
             });
 
             const tbody = table.createTBody();
-            filteredRecords.forEach((record, index) => {
-                const f = record.fields;
+            filteredRecords.forEach((r, i) => {
+                const f = r.fields;
                 const row = tbody.insertRow();
-                row.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f3f4f6';
-
-                const cells = [
-                    f['Número OC'] || '',
-                    f['Item'] || '',
-                    f['Fornecedor'] || '',
-                    f['Select'] || '',
-                    f['Quantidade'] || 0,
-                    `R$ ${(f['Valor Total'] || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                    formatDate(f['Data de Criação'] || ''),
-                    formatDate(f['Data de Entrega Esperada'] || '')
-                ];
-
-                cells.forEach((cellText, idx) => {
+                row.style.backgroundColor = i % 2 === 0 ? '#fff' : '#f3f4f6';
+                
+                [f['Número OC'], f['Item'], f['Fornecedor'], f['Status'], f['Quantidade'], formatCurrency(f['Valor Total']), formatDate(f['Data de Criação'])].forEach(val => {
                     const cell = row.insertCell();
-                    cell.textContent = cellText;
+                    cell.textContent = val;
                     cell.style.padding = '8px';
-                    cell.style.border = '1px solid #ddd';
-                    if (idx >= 4) cell.style.textAlign = 'right';
                 });
             });
 
             const ws = XLSX.utils.table_to_sheet(table);
-            
-            ws['!cols'] = [
-                { wch: 10 },  // Nº OC
-                { wch: 35 },  // Item
-                { wch: 20 },  // Fornecedor
-                { wch: 18 },  // Status
-                { wch: 12 },  // Quantidade
-                { wch: 15 },  // Valor Total
-                { wch: 15 },  // Data Criação
-                { wch: 15 }   // Data Entrega
-            ];
-
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Compras');
-            
-            const fileName = `kanban-compras-${new Date().toISOString().slice(0, 10)}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            console.log('📥 Arquivo exportado:', fileName);
+            XLSX.writeFile(wb, `kanban-${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
-        // ===== LOGIN SYSTEM =====
-        function handleLogin(event) {
-            event.preventDefault();
+        function handleLogin(e) {
+            e.preventDefault();
             const email = document.getElementById('emailInput').value.trim();
-            const loginError = document.getElementById('loginError');
-
-            if (!email) {
-                loginError.textContent = 'Por favor, insira um email válido';
-                loginError.classList.remove('hidden');
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('loginError').textContent = 'Email inválido';
+                document.getElementById('loginError').classList.remove('hidden');
                 return;
             }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                loginError.textContent = 'Email inválido. Tente novamente.';
-                loginError.classList.remove('hidden');
-                return;
-            }
-
+            
             currentUser = email;
             localStorage.setItem('kanban_user', email);
-            loginError.classList.add('hidden');
-
             document.getElementById('loginModal').classList.add('hidden');
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('userEmail').textContent = email;
-
-            console.log('✅ Login bem-sucedido:', email);
-            fetchData();
-            startAutoRefresh();
+            console.log('✅ Login:', email);
         }
 
         function handleLogout() {
-            if (confirm('Deseja sair da aplicação?')) {
+            if (confirm('Deseja sair?')) {
                 currentUser = null;
                 localStorage.removeItem('kanban_user');
-                stopAutoRefresh();
-                
                 document.getElementById('appContent').classList.add('hidden');
                 document.getElementById('loginModal').classList.remove('hidden');
                 document.getElementById('emailInput').value = '';
-                
-                allRecords = [];
-                filteredRecords = [];
-                console.log('👋 Logout realizado');
             }
         }
 
         function checkAuth() {
-            const savedUser = localStorage.getItem('kanban_user');
-            if (savedUser) {
-                currentUser = savedUser;
+            const user = localStorage.getItem('kanban_user');
+            if (user) {
+                currentUser = user;
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('appContent').classList.remove('hidden');
-                document.getElementById('userEmail').textContent = savedUser;
-                console.log('🔓 Usuário autenticado:', savedUser);
-                fetchData();
-                startAutoRefresh();
+                document.getElementById('userEmail').textContent = user;
+                loadSampleData();
             }
         }
 
-        // ===== MODAL DE DETALHES =====
-        function openDetailsModal(cardElement) {
-            const ocNumber = cardElement.getAttribute('data-oc-number');
-            const fields = findRecordByOC(ocNumber);
-            
-            if (!fields) {
-                console.error('❌ Registro não encontrado para OC:', ocNumber);
-                return;
-            }
-            
-            document.getElementById('modalTitle').textContent = fields['Item'] || 'Detalhes da OC';
-            document.getElementById('modalSubtitle').textContent = `OC-${ocNumber}`;
-            document.getElementById('modalOC').textContent = `OC-${ocNumber}`;
-            document.getElementById('modalItem').textContent = fields['Item'] || '-';
-            document.getElementById('modalFornecedor').textContent = fields['Fornecedor'] || '-';
-            document.getElementById('modalStatus').textContent = fields['Select'] || '-';
-            document.getElementById('modalQtd').textContent = fields['Quantidade'] || '0';
-            document.getElementById('modalValorUnit').textContent = formatCurrency(fields['Valor Unitário'] || 0);
-            document.getElementById('modalValorTotal').textContent = formatCurrency(fields['Valor Total'] || 0);
-            document.getElementById('modalDataCriacao').textContent = formatDate(fields['Data de Criação'] || '');
-            document.getElementById('modalDataEntrega').textContent = formatDate(fields['Data de Entrega Esperada'] || '');
-            document.getElementById('modalObservacoes').textContent = fields['Observações'] || 'Nenhuma observação adicionada';
-            
-            document.getElementById('detailsModal').classList.remove('hidden');
-            console.log('📋 Modal aberto para OC:', ocNumber);
-        }
-
-        function findRecordByOC(ocNumber) {
-            for (let record of allRecords) {
-                if (String(record.fields['Número OC']) === String(ocNumber)) {
-                    return record.fields;
-                }
-            }
-            return null;
-        }
-
-        function closeDetailsModal() {
-            document.getElementById('detailsModal').classList.add('hidden');
-            console.log('📋 Modal fechado');
-        }
-
-        // Fechar modal ao clicar fora
-        document.addEventListener('click', function(event) {
-            const modal = document.getElementById('detailsModal');
-            if (event.target === modal) {
-                closeDetailsModal();
-            }
-        });
-
-        // Fechar modal com ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeDetailsModal();
-            }
-        });
-
-        // ===== INICIAR =====
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Aplicação iniciada');
+            console.log('🚀 App iniciado');
             checkAuth();
         });
     </script>
