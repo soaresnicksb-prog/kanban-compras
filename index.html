@@ -27,6 +27,19 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .pulse-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            animation: pulse 2s infinite;
+            margin-right: 6px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -75,6 +88,14 @@
                 <div class="text-right">
                     <p class="text-sm text-gray-600">Logado como:</p>
                     <p class="font-semibold text-gray-800" id="userEmail">-</p>
+                </div>
+                <div class="border-l border-gray-300 h-8"></div>
+                <div class="text-right text-xs">
+                    <p class="text-gray-500 flex items-center">
+                        <span class="pulse-dot"></span>
+                        Última atualização:
+                    </p>
+                    <p class="font-mono text-gray-700" id="lastUpdate">--:--:--</p>
                 </div>
                 <div class="border-l border-gray-300 h-8"></div>
                 <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
@@ -244,7 +265,6 @@
 
         </div>
     </div>
-    </div>
 
     <!-- Tabela oculta para exportação -->
     <table id="exportTable" style="display: none;"></table>
@@ -254,6 +274,8 @@
         let allRecords = [];
         let filteredRecords = [];
         let currentUser = null;
+        let autoRefreshInterval = null;
+        let lastUpdateTime = null;
 
         const statusMap = {
             'Cotação': 'col-cotacao',
@@ -291,6 +313,29 @@
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
 
+        const updateLastUpdateTime = () => {
+            lastUpdateTime = new Date();
+            const hours = String(lastUpdateTime.getHours()).padStart(2, '0');
+            const minutes = String(lastUpdateTime.getMinutes()).padStart(2, '0');
+            const seconds = String(lastUpdateTime.getSeconds()).padStart(2, '0');
+            document.getElementById('lastUpdate').textContent = `${hours}:${minutes}:${seconds}`;
+        };
+
+        // ===== AUTO-REFRESH =====
+        function startAutoRefresh() {
+            // Atualizar a cada 30 segundos
+            autoRefreshInterval = setInterval(() => {
+                fetchData();
+            }, 30000);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
         // ===== FETCH DADOS =====
         async function fetchData() {
             const loading = document.getElementById('loading');
@@ -311,6 +356,7 @@
                 
                 populateFornecedorDropdown();
                 applyFilters();
+                updateLastUpdateTime();
 
             } catch (error) {
                 console.error(error);
@@ -585,14 +631,16 @@
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('userEmail').textContent = email;
 
-            // Carregar dados
+            // Carregar dados e iniciar auto-refresh
             fetchData();
+            startAutoRefresh();
         }
 
         function handleLogout() {
             if (confirm('Deseja sair da aplicação?')) {
                 currentUser = null;
                 localStorage.removeItem('kanban_user');
+                stopAutoRefresh();
                 
                 // Voltar ao login
                 document.getElementById('appContent').classList.add('hidden');
@@ -613,6 +661,7 @@
                 document.getElementById('appContent').classList.remove('hidden');
                 document.getElementById('userEmail').textContent = savedUser;
                 fetchData();
+                startAutoRefresh();
             }
         }
 
