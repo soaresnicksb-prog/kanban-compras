@@ -359,17 +359,24 @@
 
         const formatDate = (dateString) => {
             if (!dateString) return '-';
-            const date = new Date(dateString);
+            // Parse YYYY-MM-DD as local date, not UTC
+            const [year, month, day] = dateString.split('-');
+            const date = new Date(year, month - 1, day);
             return date.toLocaleDateString('pt-BR');
         };
 
         const getDaysOld = (dateString) => {
             if (!dateString) return 999;
-            const date = new Date(dateString);
+            // Parse YYYY-MM-DD as local date, not UTC
+            const [year, month, day] = dateString.split('-');
+            const date = new Date(year, month - 1, day);
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            date.setHours(0, 0, 0, 0);
             const diffTime = Math.abs(today - date);
             return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
+</parameter>
 
         const updateLastUpdateTime = () => {
             lastUpdateTime = new Date();
