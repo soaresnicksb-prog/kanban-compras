@@ -264,6 +264,18 @@
                 <div id="col-cancelado" class="kanban-column space-y-3"></div>
             </div>
 
+            <!-- Coluna: Negociação -->
+            <div class="bg-gray-200 p-4 rounded-xl min-w-[280px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                        Negociação
+                    </h2>
+                    <span class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-sm font-semibold count-tag" id="count-negociacao">0</span>
+                </div>
+                <div id="col-negociacao" class="kanban-column space-y-3"></div>
+            </div>
+
         </div>
     </div>
 
@@ -286,7 +298,7 @@
             'Em Trânsito': 'col-transito',
             'Recebido': 'col-recebido',
             'Cancelado': 'col-cancelado',
-            'Negociação': 'col-cotacao' // Default fallback para status desconhecidos
+            'Negociação': 'col-negociacao'
         };
 
         const countMap = {
@@ -295,7 +307,7 @@
             'Em Trânsito': 'count-transito',
             'Recebido': 'count-recebido',
             'Cancelado': 'count-cancelado',
-            'Negociação': 'count-cotacao'
+            'Negociação': 'count-negociacao'
         };
 
         // ===== FUNÇÕES AUXILIARES =====
@@ -473,7 +485,7 @@
                 const f = record.fields;
                 const status = f['Select'] || 'Cotação';
                 
-                // Se status não existe, usar 'Cotação' como fallback
+                // Mapeamento de status - Negociação agora tem coluna própria
                 const colId = statusMap[status] || statusMap['Cotação'];
                 const countId = countMap[status] || countMap['Cotação'];
 
